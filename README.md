@@ -4,6 +4,7 @@
 [![Latest release](https://img.shields.io/github/v/release/hightemp/site-analyzer)](https://github.com/hightemp/site-analyzer/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/hightemp/site-analyzer/total)](https://github.com/hightemp/site-analyzer/releases)
 [![Go version](https://img.shields.io/github/go-mod/go-version/hightemp/site-analyzer)](go.mod)
+[![](https://asdertasd.site/counter/site-analyzer)](https://asdertasd.site/counter/site-analyzer)
 
 Website technology scanner written in Go. It fetches pages over HTTP(S), detects
 technologies with
