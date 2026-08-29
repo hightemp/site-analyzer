@@ -1,0 +1,71 @@
+# site-analyzer
+
+Website technology scanner written in Go. It fetches pages over HTTP(S), detects
+technologies with
+[`github.com/projectdiscovery/wappalyzergo`](https://github.com/projectdiscovery/wappalyzergo)
+and produces machine-readable or human-readable reports.
+
+## Build
+
+Go 1.25 or newer is required.
+
+```bash
+make build
+./bin/site-analyzer --help
+```
+
+## Usage
+
+Scan one website:
+
+```bash
+./bin/site-analyzer -u https://example.com
+```
+
+Multiple URLs can be supplied with repeated `-u` options, positional arguments,
+or a TXT file. Empty lines and lines beginning with `#` are ignored.
+
+```bash
+./bin/site-analyzer -l targets.txt -c 20 -f jsonl -o report.jsonl
+./bin/site-analyzer example.com https://projectdiscovery.io -f table
+cat targets.txt | ./bin/site-analyzer -l - -f csv -o report.csv
+```
+
+When the URL scheme is omitted, `https://` is used. A failed target is recorded
+in the report without stopping the remaining scans. The process exits with code
+`1` when one or more targets fail.
+
+### Report formats
+
+- `jsonl` / `ndjson` — one complete JSON object per website, suitable for streaming;
+- `json` — an indented JSON array;
+- `csv` — one row per website;
+- `table` — a compact terminal table;
+- `markdown` / `md` — a Markdown table.
+
+JSON and JSONL reports include the input and final URLs, HTTP status, page title,
+server, content type, duration, processed body size, error, and detailed
+technology information: name, version, categories, website, description, and CPE.
+
+### Useful options
+
+```text
+-c, --concurrency N  number of concurrent requests (default: 10)
+--timeout 15s        timeout per target
+--max-body N         maximum processed response body (default: 5 MiB)
+-H 'Name: value'     additional HTTP header; may be repeated
+--insecure           allow invalid or self-signed TLS certificates
+--no-redirect        do not follow HTTP redirects
+--quiet              do not print the summary to stderr
+```
+
+## Development
+
+```bash
+make test
+make vet
+make lint
+```
+
+The code is split into the `target`, `scanner`, `runner`, `report`, and `app`
+packages under `internal/`. The entry point is located in `cmd/site-analyzer`.
