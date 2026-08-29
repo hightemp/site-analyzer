@@ -1,5 +1,10 @@
 # site-analyzer
 
+[![Release](https://github.com/hightemp/site-analyzer/actions/workflows/release.yml/badge.svg)](https://github.com/hightemp/site-analyzer/actions/workflows/release.yml)
+[![Latest release](https://img.shields.io/github/v/release/hightemp/site-analyzer)](https://github.com/hightemp/site-analyzer/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/hightemp/site-analyzer/total)](https://github.com/hightemp/site-analyzer/releases)
+[![Go version](https://img.shields.io/github/go-mod/go-version/hightemp/site-analyzer)](go.mod)
+
 Website technology scanner written in Go. It fetches pages over HTTP(S), detects
 technologies with
 [`github.com/projectdiscovery/wappalyzergo`](https://github.com/projectdiscovery/wappalyzergo)
@@ -95,10 +100,26 @@ CSV, table, and Markdown reports emit one CMS-site row.
 ## Development
 
 ```bash
+make           # list available commands
+make check     # tests, vet, and lint
+make snapshot  # build local release archives in dist/
 make test
 make vet
 make lint
 ```
+
+## Publishing a release
+
+Publish from a clean, up-to-date `main` branch using a semantic version tag:
+
+```bash
+make release VERSION=v1.2.3
+```
+
+The command runs all checks, creates an annotated tag, and pushes it to `origin`.
+The tag triggers the [release workflow](.github/workflows/release.yml), which
+publishes Linux, macOS, and Windows archives for AMD64 and ARM64 together with a
+`checksums.txt` file. Use `make publish VERSION=v1.2.3` as an equivalent alias.
 
 The code is split into the `target`, `scanner`, `runner`, `report`, and `app`
 packages under `internal/`. The entry point is located in `cmd/site-analyzer`.

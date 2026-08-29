@@ -19,7 +19,7 @@ import (
 	"site-analyzer/internal/target"
 )
 
-const version = "dev"
+var version = "dev"
 
 type stringList []string
 
