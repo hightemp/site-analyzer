@@ -27,6 +27,7 @@ func TestRunValidation(t *testing.T) {
 		{name: "no targets", args: nil, wantCode: 2, wantOutput: "no targets"},
 		{name: "bad concurrency", args: []string{"-c", "0", "example.com"}, wantCode: 2, wantOutput: "concurrency"},
 		{name: "bad format", args: []string{"-f", "xml", "example.com"}, wantCode: 2, wantOutput: "unsupported report format"},
+		{name: "bad grouping", args: []string{"--group-by", "category", "example.com"}, wantCode: 2, wantOutput: "unsupported group mode"},
 	}
 
 	for _, test := range tests {
@@ -43,6 +44,29 @@ func TestRunValidation(t *testing.T) {
 				t.Fatalf("Run() output %q does not contain %q", combined, test.wantOutput)
 			}
 		})
+	}
+}
+
+func TestRunCMSGrouping(t *testing.T) {
+	t.Parallel()
+
+	var stdout, stderr bytes.Buffer
+	code := Run(
+		context.Background(),
+		[]string{"-u", "ftp://example.com", "--group-by", "cms", "-f", "json", "--quiet"},
+		strings.NewReader(""),
+		&stdout,
+		&stderr,
+	)
+	if code != 1 {
+		t.Fatalf("Run() code = %d, want 1; stderr: %s", code, stderr.String())
+	}
+	var groups []model.CMSGroup
+	if err := json.Unmarshal(stdout.Bytes(), &groups); err != nil {
+		t.Fatalf("decode grouped report: %v", err)
+	}
+	if len(groups) != 1 || groups[0].CMS != "Unknown" || groups[0].SiteCount != 1 {
+		t.Fatalf("groups = %+v, want one Unknown group", groups)
 	}
 }
 

@@ -47,12 +47,45 @@ JSON and JSONL reports include the input and final URLs, HTTP status, page title
 server, content type, duration, processed body size, error, and detailed
 technology information: name, version, categories, website, description, and CPE.
 
+### Grouping by CMS
+
+Use `--group-by cms` to aggregate sites by technologies in Wappalyzer's `CMS`
+category:
+
+```bash
+./bin/site-analyzer -l targets.txt --group-by cms -f json -o cms-report.json
+```
+
+Grouped JSON reports contain the CMS name, site count, and the full scan results
+for every site in that group. A site detected with multiple CMS technologies is
+included in every matching group. Sites without a detected CMS, including failed
+scans, are placed in the `Unknown` group.
+
+```json
+[
+  {
+    "cms": "WordPress",
+    "site_count": 2,
+    "sites": [
+      {
+        "input_url": "https://example.com",
+        "technologies": []
+      }
+    ]
+  }
+]
+```
+
+CMS grouping is supported by all report formats. JSONL emits one group per line;
+CSV, table, and Markdown reports emit one CMS-site row.
+
 ### Useful options
 
 ```text
 -c, --concurrency N  number of concurrent requests (default: 10)
 --timeout 15s        timeout per target
 --max-body N         maximum processed response body (default: 5 MiB)
+--group-by cms       group report results by detected CMS
 -H 'Name: value'     additional HTTP header; may be repeated
 --insecure           allow invalid or self-signed TLS certificates
 --no-redirect        do not follow HTTP redirects

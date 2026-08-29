@@ -42,7 +42,7 @@ func TestWrite(t *testing.T) {
 		t.Run(test.format, func(t *testing.T) {
 			t.Parallel()
 			var output bytes.Buffer
-			if err := Write(&output, test.format, results); err != nil {
+			if err := Write(&output, test.format, results, Options{}); err != nil {
 				t.Fatalf("Write() error = %v", err)
 			}
 			if !strings.Contains(output.String(), test.contains) {
@@ -63,11 +63,14 @@ func TestWriteAliasesAndInvalidFormat(t *testing.T) {
 
 	for _, format := range []string{"ndjson", "md"} {
 		var output bytes.Buffer
-		if err := Write(&output, format, []model.Result{}); err != nil {
+		if err := Write(&output, format, []model.Result{}, Options{}); err != nil {
 			t.Fatalf("Write(%q) error = %v", format, err)
 		}
 	}
-	if err := Write(&bytes.Buffer{}, "xml", nil); err == nil {
+	if err := Write(&bytes.Buffer{}, "xml", nil, Options{}); err == nil {
 		t.Fatal("Write(xml) error = nil")
+	}
+	if err := Write(&bytes.Buffer{}, "json", nil, Options{GroupBy: GroupMode("invalid")}); err == nil {
+		t.Fatal("Write(invalid group mode) error = nil")
 	}
 }

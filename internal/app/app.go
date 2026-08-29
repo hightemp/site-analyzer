@@ -57,7 +57,7 @@ func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.
 
 	var urls stringList
 	var headers headerList
-	var listPath, outputPath, format, userAgent string
+	var listPath, outputPath, format, userAgent, groupBy string
 	var concurrency int
 	var timeout time.Duration
 	var maxBody int64
@@ -76,6 +76,7 @@ func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.
 	flags.DurationVar(&timeout, "timeout", 15*time.Second, "timeout per target")
 	flags.Int64Var(&maxBody, "max-body", 5*1024*1024, "maximum response body bytes")
 	flags.StringVar(&userAgent, "user-agent", "site-analyzer/1.0", "HTTP User-Agent")
+	flags.StringVar(&groupBy, "group-by", "", "group report results: cms")
 	flags.Var(&headers, "H", "additional HTTP header, 'Name: value' (repeatable)")
 	flags.BoolVar(&insecure, "insecure", false, "skip TLS certificate verification")
 	flags.BoolVar(&noRedirect, "no-redirect", false, "do not follow HTTP redirects")
@@ -108,7 +109,13 @@ func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.
 		writef(stderr, "error: max-body must be greater than zero\n")
 		return 2
 	}
-	if err := report.Write(io.Discard, format, nil); err != nil {
+	groupMode, err := report.ParseGroupMode(groupBy)
+	if err != nil {
+		writef(stderr, "error: %v\n", err)
+		return 2
+	}
+	reportOptions := report.Options{GroupBy: groupMode}
+	if err := report.Write(io.Discard, format, nil, reportOptions); err != nil {
 		writef(stderr, "error: %v\n", err)
 		return 2
 	}
@@ -147,7 +154,7 @@ func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.
 		writef(stderr, "error: %v\n", runErr)
 	}
 
-	if err := writeReport(outputPath, format, results, stdout); err != nil {
+	if err := writeReport(outputPath, format, results, reportOptions, stdout); err != nil {
 		writef(stderr, "error: %v\n", err)
 		return 1
 	}
@@ -175,9 +182,9 @@ func writef(writer io.Writer, format string, values ...any) {
 	}
 }
 
-func writeReport(path, format string, results []model.Result, stdout io.Writer) error {
+func writeReport(path, format string, results []model.Result, options report.Options, stdout io.Writer) error {
 	if path == "" || path == "-" {
-		if err := report.Write(stdout, format, results); err != nil {
+		if err := report.Write(stdout, format, results, options); err != nil {
 			return fmt.Errorf("write report: %w", err)
 		}
 		return nil
@@ -187,7 +194,7 @@ func writeReport(path, format string, results []model.Result, stdout io.Writer) 
 	if err != nil {
 		return fmt.Errorf("create report %q: %w", path, err)
 	}
-	writeErr := report.Write(file, format, results)
+	writeErr := report.Write(file, format, results, options)
 	closeErr := file.Close()
 	if writeErr != nil {
 		return fmt.Errorf("write report %q: %w", path, writeErr)

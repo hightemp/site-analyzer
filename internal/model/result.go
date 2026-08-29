@@ -29,3 +29,10 @@ type Result struct {
 	ScannedAt    time.Time    `json:"scanned_at"`
 	Error        string       `json:"error,omitempty"`
 }
+
+// CMSGroup contains all scan results associated with one detected CMS.
+type CMSGroup struct {
+	CMS       string   `json:"cms"`
+	SiteCount int      `json:"site_count"`
+	Sites     []Result `json:"sites"`
+}
