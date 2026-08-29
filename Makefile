@@ -6,7 +6,9 @@
 GO ?= go
 BINARY := bin/site-analyzer
 PACKAGE := ./cmd/site-analyzer
-VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+VERSION_FILE := VERSION
+override VERSION := $(strip $(shell test -f "$(VERSION_FILE)" && tr -d '[:space:]' < "$(VERSION_FILE)"))
+TAG := v$(VERSION)
 REMOTE ?= origin
 RELEASE_BRANCH ?= main
 GOLANGCI_LINT_VERSION := v2.12.2
@@ -43,18 +45,19 @@ snapshot:
 	$(GO) run github.com/goreleaser/goreleaser/v2@$(GORELEASER_VERSION) release --snapshot --clean
 
 release-validate:
-	@test -n "$(VERSION)" || (echo "VERSION is required; example: make release VERSION=v1.2.3" >&2; exit 1)
-	@echo "$(VERSION)" | grep -Eq '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$$' || (echo "VERSION must be a semantic version prefixed with v, for example v1.2.3" >&2; exit 1)
+	@test -f "$(VERSION_FILE)" || (echo "$(VERSION_FILE) file is required" >&2; exit 1)
+	@test -n "$(VERSION)" || (echo "$(VERSION_FILE) must contain a version, for example 1.2.3" >&2; exit 1)
+	@echo "$(VERSION)" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$$' || (echo "$(VERSION_FILE) must contain a semantic version without the v prefix, for example 1.2.3" >&2; exit 1)
 	@test -z "$$(git status --porcelain)" || (echo "working tree must be clean before publishing a release" >&2; exit 1)
 	@test "$$(git branch --show-current)" = "$(RELEASE_BRANCH)" || (echo "releases must be published from $(RELEASE_BRANCH)" >&2; exit 1)
 	@git fetch "$(REMOTE)" "$(RELEASE_BRANCH)" --tags
 	@test "$$(git rev-parse HEAD)" = "$$(git rev-parse "$(REMOTE)/$(RELEASE_BRANCH)")" || (echo "local $(RELEASE_BRANCH) must match $(REMOTE)/$(RELEASE_BRANCH)" >&2; exit 1)
-	@! git rev-parse -q --verify "refs/tags/$(VERSION)" >/dev/null || (echo "tag $(VERSION) already exists" >&2; exit 1)
+	@! git rev-parse -q --verify "refs/tags/$(TAG)" >/dev/null || (echo "tag $(TAG) already exists" >&2; exit 1)
 
 release: release-validate check
-	git tag -a "$(VERSION)" -m "Release $(VERSION)"
-	git push "$(REMOTE)" "$(VERSION)"
-	@echo "Release workflow triggered for $(VERSION)"
+	git tag -a "$(TAG)" -m "Release $(TAG)"
+	git push "$(REMOTE)" "$(TAG)"
+	@echo "Release workflow triggered for $(TAG)"
 
 publish: release
 
@@ -72,5 +75,5 @@ help:
 	@echo "  lint           Run golangci-lint"
 	@echo "  check          Run test, vet, and lint"
 	@echo "  snapshot       Build local release artifacts with GoReleaser"
-	@echo "  release        Publish a tag: make release VERSION=v1.2.3"
+	@echo "  release        Publish the version declared in $(VERSION_FILE)"
 	@echo "  clean          Remove generated build and release artifacts"

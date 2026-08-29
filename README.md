@@ -14,6 +14,9 @@ and produces machine-readable or human-readable reports.
 
 Go 1.25 or newer is required.
 
+The current application version is stored in the [`VERSION`](VERSION) file and
+is embedded into binaries created by `make build`.
+
 ```bash
 make build
 ./bin/site-analyzer --help
@@ -110,16 +113,22 @@ make lint
 
 ## Publishing a release
 
-Publish from a clean, up-to-date `main` branch using a semantic version tag:
+Update `VERSION` with a semantic version without the `v` prefix, commit and push
+the change, then publish from a clean, up-to-date `main` branch:
 
 ```bash
-make release VERSION=v1.2.3
+# Edit VERSION so it contains: 1.2.3
+git add VERSION
+git commit -m "chore(release): prepare v1.2.3"
+git push origin main
+make release
 ```
 
-The command runs all checks, creates an annotated tag, and pushes it to `origin`.
+The command reads `VERSION`, runs all checks, creates the corresponding annotated
+tag (for example, `v1.2.3`), and pushes it to `origin`.
 The tag triggers the [release workflow](.github/workflows/release.yml), which
 publishes Linux, macOS, and Windows archives for AMD64 and ARM64 together with a
-`checksums.txt` file. Use `make publish VERSION=v1.2.3` as an equivalent alias.
+`checksums.txt` file. Use `make publish` as an equivalent alias.
 
 The code is split into the `target`, `scanner`, `runner`, `report`, and `app`
 packages under `internal/`. The entry point is located in `cmd/site-analyzer`.

@@ -24,6 +24,15 @@ jobs:
           go-version-file: go.mod
           cache-dependency-path: go.sum
 
+      - name: Verify release version
+        shell: bash
+        run: |
+          version="$(tr -d '[:space:]' < VERSION)"
+          if [[ "v${version}" != "${GITHUB_REF_NAME}" ]]; then
+            echo "VERSION contains ${version}, but the release tag is ${GITHUB_REF_NAME}" >&2
+            exit 1
+          fi
+
       - name: Test
         run: go test -race ./...
 
